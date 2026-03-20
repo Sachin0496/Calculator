@@ -2,9 +2,10 @@
 import React, { useMemo } from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useAutosaveCalculation } from '@/hooks/useAutosaveCalculation';
 import { useCalculatorStore } from '@/store/useCalculatorStore';
 import { calculateTax } from '@/lib/calculators/tax';
-import { formatINR } from '@/lib/formatters';
+import { formatINR, parseNumericInput } from '@/lib/formatters';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ResultCard } from '@/components/ui/ResultCard';
 import { BorderRadius, FontSize, FontWeight, Spacing, Shadows } from '@/constants/theme';
@@ -12,17 +13,45 @@ import { BorderRadius, FontSize, FontWeight, Spacing, Shadows } from '@/constant
 export default function TaxScreen() {
   const { colors } = useTheme();
   const { taxIncome, tax80C, tax80D, taxHRA, taxOther, setField } = useCalculatorStore();
+  const annualIncome = parseNumericInput(taxIncome);
+  const deductions80C = parseNumericInput(tax80C);
+  const deductions80D = parseNumericInput(tax80D);
+  const hra = parseNumericInput(taxHRA);
+  const otherDeductions = parseNumericInput(taxOther);
 
   const comparison = useMemo(
     () =>
       calculateTax({
-        annualIncome: parseFloat(taxIncome) || 0,
-        deductions80C: parseFloat(tax80C) || 0,
-        deductions80D: parseFloat(tax80D) || 0,
-        hra: parseFloat(taxHRA) || 0,
-        otherDeductions: parseFloat(taxOther) || 0,
+        annualIncome,
+        deductions80C,
+        deductions80D,
+        hra,
+        otherDeductions,
       }),
-    [taxIncome, tax80C, tax80D, taxHRA, taxOther]
+    [annualIncome, deductions80C, deductions80D, hra, otherDeductions]
+  );
+
+  const hasInput =
+    annualIncome > 0 ||
+    deductions80C > 0 ||
+    deductions80D > 0 ||
+    hra > 0 ||
+    otherDeductions > 0;
+
+  useAutosaveCalculation(
+    annualIncome > 0
+      ? {
+          calculatorId: 'tax',
+          title: 'Income Tax Calculator',
+          inputSummary: `Income ${formatINR(annualIncome)} · Old deductions ${formatINR(
+            deductions80C + deductions80D + hra + otherDeductions
+          )}`,
+          resultSummary: `${
+            comparison.betterRegime === 'new' ? 'New' : 'Old'
+          } regime saves ${formatINR(comparison.savings)}`,
+          route: '/calculators/tax',
+        }
+      : null
   );
 
   return (
@@ -74,12 +103,14 @@ export default function TaxScreen() {
       </View>
 
       {/* Regime Comparison */}
-      {comparison.newRegime.totalTax > 0 || comparison.oldRegime.totalTax > 0 ? (
+      {hasInput ? (
         <>
           {/* Winner Banner */}
           <View style={[styles.winnerBanner, { backgroundColor: colors.successBg }]}>
             <Text style={[styles.winnerText, { color: colors.success }]}>
-              ✅ {comparison.betterRegime === 'new' ? 'New' : 'Old'} Regime saves you {formatINR(comparison.savings)}
+              {comparison.savings > 0
+                ? `${comparison.betterRegime === 'new' ? 'New' : 'Old'} regime saves ${formatINR(comparison.savings)}`
+                : 'Both regimes currently result in the same tax amount.'}
             </Text>
           </View>
 

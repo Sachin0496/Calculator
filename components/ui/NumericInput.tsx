@@ -1,5 +1,5 @@
 // Reusable numeric input field component
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,16 @@ import {
   TextInputProps,
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { BorderRadius, FontFamily, FontSize, FontWeight, Spacing } from '@/constants/theme';
+
+function hexToRgba(hex: string, alpha: number) {
+  const cleaned = hex.replace('#', '').trim();
+  const normalized = cleaned.length === 3 ? cleaned.split('').map((c) => c + c).join('') : cleaned;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 interface NumericInputProps extends Omit<TextInputProps, 'onChangeText'> {
   label: string;
@@ -31,6 +40,14 @@ export function NumericInput({
   ...rest
 }: NumericInputProps) {
   const { colors } = useTheme();
+  const [focused, setFocused] = useState(false);
+
+  const ghostBorderColor = useMemo(() => {
+    // "Ghost border" fallback: a faint outline without visually sectioning the page.
+    const base = error ? colors.error : colors.border;
+    const alpha = error ? 0.25 : 0.2;
+    return hexToRgba(base, alpha);
+  }, [colors.border, colors.error, error]);
 
   return (
     <View style={styles.container}>
@@ -39,24 +56,27 @@ export function NumericInput({
         style={[
           styles.inputContainer,
           {
-            backgroundColor: colors.inputBg,
-            borderColor: error ? colors.error : colors.border,
+            backgroundColor: focused ? colors.surfaceContainerHighest : colors.inputBg,
+            borderColor: ghostBorderColor,
           },
         ]}
       >
         {prefix && (
-          <Text style={[styles.prefix, { color: colors.textMuted }]}>{prefix}</Text>
+          <Text style={[styles.prefix, { color: colors.primary }]}>{prefix}</Text>
         )}
         <TextInput
-          style={[styles.input, { color: colors.textPrimary }]}
+          style={[styles.input, { color: colors.textPrimary, fontFamily: FontFamily.headline }]}
           value={value}
           onChangeText={onChangeText}
-          keyboardType="numeric"
+          keyboardType="decimal-pad"
+          inputMode="decimal"
           placeholderTextColor={colors.textMuted}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           {...rest}
         />
         {suffix && (
-          <Text style={[styles.suffix, { color: colors.textMuted }]}>{suffix}</Text>
+          <Text style={[styles.suffix, { color: colors.textSecondary }]}>{suffix}</Text>
         )}
       </View>
       {error ? (
@@ -73,9 +93,12 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   label: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
     marginBottom: Spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    fontFamily: FontFamily.label,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -86,24 +109,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
   },
   prefix: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontSize: FontSize.bodyMedium,
+    fontWeight: FontWeight.semibold,
     marginRight: Spacing.sm,
+    fontFamily: FontFamily.headline,
   },
   input: {
     flex: 1,
     fontSize: FontSize.bodyMedium,
     fontWeight: FontWeight.medium,
     height: '100%',
+    fontFamily: FontFamily.headline,
   },
   suffix: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
     marginLeft: Spacing.sm,
+    fontFamily: FontFamily.label,
   },
   hint: {
     fontSize: FontSize.caption,
     marginTop: Spacing.xs,
     marginLeft: Spacing.xs,
+    fontFamily: FontFamily.body,
   },
 });

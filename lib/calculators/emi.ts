@@ -26,8 +26,19 @@ export interface AmortizationRow {
 export function calculateEMI(input: EMIInput): EMIResult {
   const { principal, annualRate, tenureMonths } = input;
 
-  if (principal <= 0 || annualRate <= 0 || tenureMonths <= 0) {
+  if (principal <= 0 || tenureMonths <= 0) {
     return { emi: 0, totalInterest: 0, totalAmount: 0, principalPercent: 0, interestPercent: 0 };
+  }
+
+  if (annualRate <= 0) {
+    const emi = principal / tenureMonths;
+    return {
+      emi: Math.round(emi),
+      totalInterest: 0,
+      totalAmount: Math.round(principal),
+      principalPercent: 100,
+      interestPercent: 0,
+    };
   }
 
   const r = annualRate / 12 / 100;

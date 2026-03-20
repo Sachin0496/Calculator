@@ -1,10 +1,10 @@
-// EMI Calculator Screen
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View, Text } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useAutosaveCalculation } from '@/hooks/useAutosaveCalculation';
 import { useCalculatorStore } from '@/store/useCalculatorStore';
 import { calculateEMI } from '@/lib/calculators/emi';
-import { formatINR, formatTenure } from '@/lib/formatters';
+import { formatINR, formatTenure, parseNumericInput } from '@/lib/formatters';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ResultCard } from '@/components/ui/ResultCard';
 import { DonutChart } from '@/components/charts/DonutChart';
@@ -13,15 +13,30 @@ import { Spacing } from '@/constants/theme';
 export default function EMIScreen() {
   const { colors } = useTheme();
   const { emiPrincipal, emiRate, emiTenure, setField } = useCalculatorStore();
+  const principal = parseNumericInput(emiPrincipal);
+  const annualRate = parseNumericInput(emiRate);
+  const tenureMonths = Math.max(0, Math.round(parseNumericInput(emiTenure)));
 
   const result = useMemo(
     () =>
       calculateEMI({
-        principal: parseFloat(emiPrincipal) || 0,
-        annualRate: parseFloat(emiRate) || 0,
-        tenureMonths: parseInt(emiTenure) || 0,
+        principal,
+        annualRate,
+        tenureMonths,
       }),
-    [emiPrincipal, emiRate, emiTenure]
+    [annualRate, principal, tenureMonths]
+  );
+
+  useAutosaveCalculation(
+    result.emi > 0
+      ? {
+          calculatorId: 'emi',
+          title: 'EMI Calculator',
+          inputSummary: `${formatINR(principal)} at ${annualRate}% for ${formatTenure(tenureMonths)}`,
+          resultSummary: `EMI ${formatINR(result.emi)}`,
+          route: '/calculators/emi',
+        }
+      : null
   );
 
   return (
@@ -52,14 +67,14 @@ export default function EMIScreen() {
         onChangeText={(v) => setField('emiTenure', v)}
         prefix=""
         suffix="months"
-        hint={`= ${formatTenure(parseInt(emiTenure) || 0)}`}
+        hint={`= ${formatTenure(tenureMonths)}`}
       />
 
       {result.emi > 0 && (
         <>
           <DonutChart
             data={[
-              { value: parseFloat(emiPrincipal) || 0, color: colors.primary, label: `Principal (${result.principalPercent}%)` },
+              { value: principal, color: colors.primary, label: `Principal (${result.principalPercent}%)` },
               { value: result.totalInterest, color: colors.warning, label: `Interest (${result.interestPercent}%)` },
             ]}
             centerValue={formatINR(result.emi)}
@@ -71,7 +86,7 @@ export default function EMIScreen() {
             mainLabel="Monthly EMI"
             mainValue={formatINR(result.emi)}
             items={[
-              { label: 'Principal Amount', value: formatINR(parseFloat(emiPrincipal) || 0) },
+              { label: 'Principal Amount', value: formatINR(principal) },
               { label: 'Total Interest', value: formatINR(result.totalInterest), color: colors.warning },
               { label: 'Total Amount', value: formatINR(result.totalAmount) },
             ]}
@@ -84,5 +99,5 @@ export default function EMIScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.xl, paddingBottom: Spacing['2xl'] },
+  content: { padding: Spacing.lg, paddingBottom: Spacing['2xl'] },
 });

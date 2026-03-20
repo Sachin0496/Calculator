@@ -24,12 +24,23 @@ export interface SIPYearlyRow {
 export function calculateSIP(input: SIPInput): SIPResult {
   const { monthlyAmount, annualReturn, years } = input;
 
-  if (monthlyAmount <= 0 || annualReturn <= 0 || years <= 0) {
+  if (monthlyAmount <= 0 || years <= 0) {
     return { investedAmount: 0, estimatedReturns: 0, totalValue: 0, investedPercent: 0, returnsPercent: 0 };
   }
 
-  const r = annualReturn / 12 / 100;
   const n = years * 12;
+  if (annualReturn <= 0) {
+    const investedAmount = monthlyAmount * n;
+    return {
+      investedAmount: Math.round(investedAmount),
+      estimatedReturns: 0,
+      totalValue: Math.round(investedAmount),
+      investedPercent: 100,
+      returnsPercent: 0,
+    };
+  }
+
+  const r = annualReturn / 12 / 100;
   const rPowN = Math.pow(1 + r, n);
 
   const totalValue = monthlyAmount * ((rPowN - 1) / r) * (1 + r);
@@ -46,8 +57,18 @@ export function calculateSIP(input: SIPInput): SIPResult {
 }
 
 export function calculateLumpsum(principal: number, annualReturn: number, years: number): SIPResult {
-  if (principal <= 0 || annualReturn <= 0 || years <= 0) {
+  if (principal <= 0 || years <= 0) {
     return { investedAmount: 0, estimatedReturns: 0, totalValue: 0, investedPercent: 0, returnsPercent: 0 };
+  }
+
+  if (annualReturn <= 0) {
+    return {
+      investedAmount: Math.round(principal),
+      estimatedReturns: 0,
+      totalValue: Math.round(principal),
+      investedPercent: 100,
+      returnsPercent: 0,
+    };
   }
 
   const r = annualReturn / 100;

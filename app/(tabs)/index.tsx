@@ -9,13 +9,13 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import Svg, { Path, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
-import { CALCULATORS, BorderRadius, FontSize, FontWeight, Spacing, Shadows } from '@/constants/theme';
+import { CALCULATORS, BorderRadius, FontFamily, FontSize, FontWeight, Spacing } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 const CARD_GAP = Spacing.md;
-const CARD_WIDTH = (width - Spacing.xl * 2 - CARD_GAP) / 2;
+const CARD_WIDTH = (width - Spacing.lg * 2 - CARD_GAP) / 2;
 
 // Simple SVG icons
 function getIcon(name: string, color: string = '#fff') {
@@ -73,7 +73,7 @@ function getIcon(name: string, color: string = '#fff') {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <ScrollView
@@ -81,16 +81,12 @@ export default function HomeScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Hero Section */}
       <View style={styles.hero}>
-        <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-          Welcome to
-        </Text>
         <Text style={[styles.appName, { color: colors.textPrimary }]}>
-          FinCalc India 🇮🇳
+          Financial calculators
         </Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Smart financial calculators built for India
+          Fast, clean tools for everyday money decisions in India.
         </Text>
       </View>
 
@@ -107,35 +103,20 @@ export default function HomeScreen() {
               styles.card,
               {
                 transform: [{ scale: pressed ? 0.97 : 1 }],
+                backgroundColor: pressed ? colors.surfaceContainerHighest : colors.surfaceContainerLow,
               },
             ]}
             onPress={() => router.push(calc.route as any)}
           >
-            {/* Gradient background using SVG */}
-            <Svg style={StyleSheet.absoluteFill} width={CARD_WIDTH} height={150}>
-              <Defs>
-                <LinearGradient id={`grad-${calc.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                  <Stop offset="0%" stopColor={calc.gradient[0]} />
-                  <Stop offset="100%" stopColor={calc.gradient[1]} />
-                </LinearGradient>
-              </Defs>
-              <Rect
-                width={CARD_WIDTH}
-                height={150}
-                rx={BorderRadius.md}
-                fill={`url(#grad-${calc.id})`}
-              />
-            </Svg>
-
             <View style={styles.cardContent}>
-              <View style={styles.iconContainer}>
-                {getIcon(calc.icon)}
+              <View style={[styles.iconContainer, { backgroundColor: colors.surfaceContainerLowest }]}>
+                {getIcon(calc.icon, colors.primary)}
               </View>
-              <Text style={styles.cardName}>{calc.name}</Text>
-              <Text style={styles.cardDesc}>{calc.description}</Text>
+              <Text style={[styles.cardName, { color: colors.textPrimary }]}>{calc.name}</Text>
+              <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>{calc.description}</Text>
               {calc.isPremium && (
-                <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                <View style={[styles.proBadge, { backgroundColor: colors.surfaceContainerLowest }]}>
+                  <Text style={[styles.proBadgeText, { color: colors.secondary }]}>PRO</Text>
                 </View>
               )}
             </View>
@@ -146,7 +127,7 @@ export default function HomeScreen() {
       {/* Bottom info */}
       <View style={styles.infoBar}>
         <Text style={[styles.infoText, { color: colors.textMuted }]}>
-          All calculations are offline · No login required
+          Results update instantly and stay on this device
         </Text>
       </View>
     </ScrollView>
@@ -158,25 +139,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     paddingBottom: Spacing['2xl'],
   },
   hero: {
     marginBottom: Spacing.xl,
     paddingTop: Spacing.sm,
   },
-  greeting: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.regular,
-  },
   appName: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: FontWeight.bold,
-    marginTop: Spacing.xs,
+    fontFamily: FontFamily.headline,
   },
   subtitle: {
     fontSize: FontSize.body,
     marginTop: Spacing.xs,
+    lineHeight: 22,
   },
   sectionTitle: {
     fontSize: FontSize.h2,
@@ -192,7 +170,6 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: 150,
     borderRadius: BorderRadius.md,
-    overflow: 'hidden',
   },
   cardContent: {
     flex: 1,
@@ -206,31 +183,31 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#1a1c1c',
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
   },
   cardName: {
     fontSize: FontSize.h2,
     fontWeight: FontWeight.bold,
-    color: '#FFFFFF',
+    fontFamily: FontFamily.headline,
   },
   cardDesc: {
     fontSize: FontSize.caption,
-    color: 'rgba(255,255,255,0.85)',
     marginTop: 2,
   },
   proBadge: {
     position: 'absolute',
     top: Spacing.md,
     right: Spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.25)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: BorderRadius.full,
   },
   proBadgeText: {
-    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -238,6 +215,7 @@ const styles = StyleSheet.create({
   infoBar: {
     marginTop: Spacing.xl,
     alignItems: 'center',
+    marginBottom: 92,
   },
   infoText: {
     fontSize: FontSize.caption,

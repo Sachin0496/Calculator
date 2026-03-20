@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { BorderRadius, FontFamily, FontSize, FontWeight, Spacing } from '@/constants/theme';
 
 interface SegmentedControlProps {
   label: string;
@@ -22,7 +22,15 @@ export function SegmentedControl({
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-      <View style={[styles.segmentContainer, { backgroundColor: colors.inputBg }]}>
+      <View
+        style={[
+          styles.segmentContainer,
+          {
+            backgroundColor: colors.surfaceContainerLow,
+            borderColor: colors.border,
+          },
+        ]}
+      >
         {options.map((option) => {
           const isActive = option.value === selectedValue;
           return (
@@ -31,13 +39,16 @@ export function SegmentedControl({
               onPress={() => onSelect(option.value)}
               style={[
                 styles.segment,
-                isActive && { backgroundColor: colors.primary },
+                isActive && {
+                  backgroundColor: colors.surfaceContainerLowest,
+                  borderColor: colors.border,
+                },
               ]}
             >
               <Text
                 style={[
                   styles.segmentText,
-                  { color: isActive ? '#FFFFFF' : colors.textSecondary },
+                  { color: isActive ? colors.primary : colors.textSecondary },
                 ]}
               >
                 {option.label}
@@ -55,23 +66,31 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   label: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
     marginBottom: Spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    fontFamily: FontFamily.label,
   },
   segmentContainer: {
     flexDirection: 'row',
     borderRadius: BorderRadius.sm,
-    padding: 4,
+    padding: 3,
+    borderWidth: 1,
   },
   segment: {
     flex: 1,
     paddingVertical: Spacing.sm + 2,
     alignItems: 'center',
     borderRadius: BorderRadius.sm - 2,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   segmentText: {
     fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
+    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.label,
   },
 });

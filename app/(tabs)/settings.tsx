@@ -1,9 +1,24 @@
-// Settings Tab
 import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Linking,
+  Alert,
+  Platform,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import * as StoreReview from 'expo-store-review';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
 import { FontSize, FontWeight, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import { APP_CONFIG } from '@/constants/appConfig';
+import { CLERK_ENABLED } from '@/constants/clerk';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { useAppStore } from '@/store/useAppStore';
+import { usePremiumAccess } from '@/hooks/usePremiumAccess';
 
 interface SettingsRowProps {
   icon: React.ReactNode;
@@ -15,22 +30,28 @@ interface SettingsRowProps {
 
 function SettingsRow({ icon, title, subtitle, onPress, trailing }: SettingsRowProps) {
   const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
+      disabled={!onPress}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: colors.card, opacity: pressed ? 0.85 : 1 },
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: onPress && pressed ? 0.88 : 1,
+        },
       ]}
     >
-      <View style={[styles.rowIcon, { backgroundColor: colors.primaryBg }]}>
+      <View style={[styles.rowIcon, { backgroundColor: colors.surfaceContainerHigh }]}>
         {icon}
       </View>
       <View style={styles.rowText}>
         <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>{title}</Text>
-        {subtitle && (
+        {subtitle ? (
           <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>
-        )}
+        ) : null}
       </View>
       {trailing || (
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth={2}>
@@ -41,64 +62,144 @@ function SettingsRow({ icon, title, subtitle, onPress, trailing }: SettingsRowPr
   );
 }
 
-export default function SettingsScreen() {
-  const { colors } = useTheme();
+async function openUrl(url: string) {
+  const supported = await Linking.canOpenURL(url);
+  if (!supported) {
+    throw new Error(`Cannot open URL: ${url}`);
+  }
+
+  await Linking.openURL(url);
+}
+
+function SettingsBody({
+  accountSubtitle,
+  premiumSubtitle,
+  accountRoute,
+}: {
+  accountSubtitle: string;
+  premiumSubtitle: string;
+  accountRoute: '/account' | '/sign-in';
+}) {
+  const router = useRouter();
+  const { colors, appearanceMode, systemScheme } = useTheme();
+  const setAppearanceMode = useAppStore((state) => state.setAppearanceMode);
+
+  const handleRateApp = async () => {
+    try {
+      if (await StoreReview.isAvailableAsync()) {
+        await StoreReview.requestReview();
+        return;
+      }
+
+      if (Platform.OS === 'android') {
+        await openUrl(APP_CONFIG.playStoreUrl);
+        return;
+      }
+
+      if (APP_CONFIG.iosAppStoreId) {
+        await openUrl(
+          `itms-apps://itunes.apple.com/app/viewContentsUserReviews/id${APP_CONFIG.iosAppStoreId}?action=write-review`
+        );
+        return;
+      }
+
+      Alert.alert(
+        'Store review is not configured',
+        'Add your App Store ID in constants/appConfig.ts to enable the iOS review fallback.'
+      );
+    } catch (error) {
+      Alert.alert('Unable to open the rating flow', 'Please try again after the app is published.');
+    }
+  };
+
+  const handleSendFeedback = async () => {
+    try {
+      await openUrl(
+        `mailto:${APP_CONFIG.supportEmail}?subject=${encodeURIComponent('FinCalc India feedback')}`
+      );
+    } catch (error) {
+      Alert.alert(
+        'No mail app available',
+        `Send your feedback manually to ${APP_CONFIG.supportEmail}.`
+      );
+    }
+  };
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
     >
-      {/* Pro Banner */}
-      <Pressable style={[styles.proBanner, Shadows.button]}>
-        <Text style={styles.proBannerTitle}>⭐ Upgrade to FinCalc Pro</Text>
-        <Text style={styles.proBannerDesc}>
-          No ads · History · Export · Dark Mode
+      <View style={[styles.statusCard, { backgroundColor: colors.card, borderColor: colors.border }, Shadows.card]}>
+        <Text style={[styles.statusEyebrow, { color: colors.textMuted }]}>ACCOUNT & ACCESS</Text>
+        <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>Settings</Text>
+        <Text style={[styles.statusText, { color: colors.textSecondary }]}>
+          Appearance stays on this device. Account and premium access are read from Clerk, not from local client state.
         </Text>
-        <View style={styles.proBannerPrice}>
-          <Text style={styles.proBannerPriceText}>₹29/month</Text>
-        </View>
-      </Pressable>
+      </View>
 
-      {/* General */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>GENERAL</Text>
-      <View style={[styles.section, { backgroundColor: colors.card }, Shadows.card]}>
-        <SettingsRow
-          icon={
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2}>
-              <Path d="M12 20a8 8 0 100-16 8 8 0 000 16z" />
-              <Path d="M12 14a2 2 0 100-4 2 2 0 000 4z" />
-              <Path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-            </Svg>
-          }
-          title="Appearance"
-          subtitle="System default"
-        />
-        <SettingsRow
-          icon={
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2}>
-              <Path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-              <Path d="M2 12h20" />
-              <Path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z" />
-            </Svg>
-          }
-          title="Language"
-          subtitle="English"
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>APPEARANCE</Text>
+      <View style={[styles.appearanceCard, { backgroundColor: colors.card, borderColor: colors.border }, Shadows.card]}>
+        <Text style={[styles.appearanceTitle, { color: colors.textPrimary }]}>Theme</Text>
+        <Text style={[styles.appearanceSubtitle, { color: colors.textSecondary }]}>
+          {appearanceMode === 'system'
+            ? `Following device theme (${systemScheme})`
+            : `App theme locked to ${appearanceMode}`}
+        </Text>
+        <SegmentedControl
+          label="Appearance"
+          options={[
+            { label: 'System', value: 'system' },
+            { label: 'Light', value: 'light' },
+            { label: 'Dark', value: 'dark' },
+          ]}
+          selectedValue={appearanceMode}
+          onSelect={(value) => setAppearanceMode(value as 'system' | 'light' | 'dark')}
         />
       </View>
 
-      {/* Support */}
-      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>SUPPORT</Text>
-      <View style={[styles.section, { backgroundColor: colors.card }, Shadows.card]}>
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>ACCESS</Text>
+      <View style={styles.group}>
         <SettingsRow
           icon={
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2}>
-              <Path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <Path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              <Path d="M20 21a8 8 0 10-16 0" />
+              <Path d="M12 11a4 4 0 100-8 4 4 0 000 8z" />
+            </Svg>
+          }
+          title="Account"
+          subtitle={accountSubtitle}
+          onPress={() => router.push(accountRoute)}
+        />
+        <SettingsRow
+          icon={
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2}>
+              <Path d="M3 7h18" />
+              <Path d="M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z" />
+              <Path d="M12 11v6" />
+              <Path d="M9 14h6" />
+            </Svg>
+          }
+          title="Premium access"
+          subtitle={premiumSubtitle}
+          onPress={() => router.push('/subscription')}
+        />
+      </View>
+
+      <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>SUPPORT</Text>
+      <View style={styles.group}>
+        <SettingsRow
+          icon={
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2}>
+              <Path d="M12 17.75l-6.17 3.24 1.18-6.88L2 9.51l6.91-1 3.09-6.26 3.09 6.26 6.91 1-5 4.6 1.18 6.88z" />
             </Svg>
           }
           title="Rate App"
-          subtitle="Help us improve!"
+          subtitle="Open the in-app review prompt or store page"
+          onPress={() => {
+            void handleRateApp();
+          }}
         />
         <SettingsRow
           icon={
@@ -108,29 +209,67 @@ export default function SettingsScreen() {
             </Svg>
           }
           title="Send Feedback"
-          subtitle="fincalc@example.com"
+          subtitle={APP_CONFIG.supportEmail}
+          onPress={() => {
+            void handleSendFeedback();
+          }}
         />
         <SettingsRow
           icon={
             <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2}>
-              <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <Path d="M12 1l9 4v6c0 5-3.8 9.7-9 11-5.2-1.3-9-6-9-11V5l9-4z" />
             </Svg>
           }
-          title="Privacy Policy"
+          title="Privacy"
+          subtitle="Read the in-app privacy summary"
+          onPress={() => router.push('/privacy')}
         />
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: colors.textMuted }]}>
           FinCalc India v1.0.0
         </Text>
         <Text style={[styles.footerText, { color: colors.textMuted }]}>
-          Made with ❤️ in India
+          Built for India
         </Text>
       </View>
     </ScrollView>
   );
+}
+
+function SettingsWithoutClerk() {
+  return (
+    <SettingsBody
+      accountSubtitle="Clerk is not configured yet. Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to enable authentication."
+      premiumSubtitle="Premium access is disabled until Clerk is configured."
+      accountRoute="/sign-in"
+    />
+  );
+}
+
+function SettingsWithClerk() {
+  const { isSignedIn, email, tier } = usePremiumAccess();
+
+  return (
+    <SettingsBody
+      accountSubtitle={
+        isSignedIn && email
+          ? `Signed in as ${email}`
+          : 'Sign in with Clerk to manage account access'
+      }
+      premiumSubtitle={
+        isSignedIn
+          ? `Server-managed tier: ${tier}`
+          : 'Sign in first. Premium status is read from Clerk metadata.'
+      }
+      accountRoute={isSignedIn ? '/account' : '/sign-in'}
+    />
+  );
+}
+
+export default function SettingsScreen() {
+  return CLERK_ENABLED ? <SettingsWithClerk /> : <SettingsWithoutClerk />;
 }
 
 const styles = StyleSheet.create({
@@ -138,37 +277,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing['2xl'],
-  },
-  proBanner: {
-    backgroundColor: '#4F6EF7',
-    borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    alignItems: 'center',
+    paddingBottom: 112,
+  },
+  statusCard: {
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    padding: Spacing.lg,
     marginBottom: Spacing.lg,
   },
-  proBannerTitle: {
-    color: '#FFFFFF',
-    fontSize: FontSize.h2,
+  statusEyebrow: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 1,
+    marginBottom: Spacing.sm,
+  },
+  statusTitle: {
+    fontSize: FontSize.h1,
     fontWeight: FontWeight.bold,
+    marginBottom: Spacing.sm,
   },
-  proBannerDesc: {
-    color: 'rgba(255,255,255,0.85)',
+  statusText: {
     fontSize: FontSize.body,
-    marginTop: Spacing.xs,
-  },
-  proBannerPrice: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: BorderRadius.full,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginTop: Spacing.md,
-  },
-  proBannerPriceText: {
-    color: '#FFFFFF',
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    lineHeight: 22,
   },
   sectionLabel: {
     fontSize: FontSize.caption,
@@ -177,9 +308,24 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
   },
-  section: {
+  appearanceCard: {
     borderRadius: BorderRadius.md,
-    overflow: 'hidden',
+    borderWidth: 1,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  appearanceTitle: {
+    fontSize: FontSize.h2,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
+  },
+  appearanceSubtitle: {
+    fontSize: FontSize.body,
+    marginBottom: Spacing.md,
+    lineHeight: 21,
+  },
+  group: {
+    gap: Spacing.sm,
     marginBottom: Spacing.lg,
   },
   row: {
@@ -187,11 +333,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.md,
     gap: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
   },
   rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -199,16 +347,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rowTitle: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.bodyMedium,
     fontWeight: FontWeight.medium,
   },
   rowSubtitle: {
     fontSize: FontSize.caption,
-    marginTop: 2,
+    marginTop: 4,
+    lineHeight: 18,
   },
   footer: {
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
     gap: Spacing.xs,
   },
   footerText: {

@@ -2,9 +2,10 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useAutosaveCalculation } from '@/hooks/useAutosaveCalculation';
 import { useCalculatorStore } from '@/store/useCalculatorStore';
 import { calculateFD, calculateRD } from '@/lib/calculators/fd';
-import { formatINR } from '@/lib/formatters';
+import { formatINR, parseNumericInput } from '@/lib/formatters';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ResultCard } from '@/components/ui/ResultCard';
@@ -15,32 +16,50 @@ export default function FDScreen() {
   const { colors } = useTheme();
   const { fdPrincipal, fdRate, fdTenure, fdCompounding, setField } = useCalculatorStore();
   const [mode, setMode] = useState<'fd' | 'rd'>('fd');
+  const principal = parseNumericInput(fdPrincipal);
+  const annualRate = parseNumericInput(fdRate);
+  const tenureMonths = Math.max(0, Math.round(parseNumericInput(fdTenure)));
 
   const fdResult = useMemo(
     () =>
       calculateFD({
-        principal: parseFloat(fdPrincipal) || 0,
-        annualRate: parseFloat(fdRate) || 0,
-        tenureMonths: parseInt(fdTenure) || 0,
+        principal,
+        annualRate,
+        tenureMonths,
         compoundingFrequency: fdCompounding,
       }),
-    [fdPrincipal, fdRate, fdTenure, fdCompounding]
+    [annualRate, fdCompounding, principal, tenureMonths]
   );
 
   const rdResult = useMemo(
     () =>
       calculateRD({
-        monthlyDeposit: parseFloat(fdPrincipal) || 0,
-        annualRate: parseFloat(fdRate) || 0,
-        tenureMonths: parseInt(fdTenure) || 0,
+        monthlyDeposit: principal,
+        annualRate,
+        tenureMonths,
       }),
-    [fdPrincipal, fdRate, fdTenure]
+    [annualRate, principal, tenureMonths]
   );
 
   const result = mode === 'fd' ? fdResult : rdResult;
   const invested = mode === 'fd' ? fdResult.investedAmount : rdResult.totalDeposited;
   const interest = mode === 'fd' ? fdResult.totalInterest : rdResult.totalInterest;
   const maturity = mode === 'fd' ? fdResult.maturityAmount : rdResult.maturityAmount;
+
+  useAutosaveCalculation(
+    maturity > 0
+      ? {
+          calculatorId: 'fd',
+          title: mode === 'fd' ? 'Fixed Deposit Calculator' : 'Recurring Deposit Calculator',
+          inputSummary:
+            mode === 'fd'
+              ? `${formatINR(principal)} for ${tenureMonths} months at ${annualRate}%`
+              : `${formatINR(principal)}/month for ${tenureMonths} months at ${annualRate}%`,
+          resultSummary: `Maturity ${formatINR(maturity)}`,
+          route: '/calculators/fd',
+        }
+      : null
+  );
 
   return (
     <ScrollView

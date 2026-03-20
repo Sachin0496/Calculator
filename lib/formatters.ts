@@ -75,3 +75,9 @@ export function parseAmount(input: string): number {
   const num = parseFloat(cleaned);
   return isNaN(num) ? 0 : num;
 }
+
+export function parseNumericInput(input: string): number {
+  const cleaned = input.replace(/[₹,%\s,]/g, '');
+  const num = parseFloat(cleaned);
+  return Number.isFinite(num) ? num : 0;
+}

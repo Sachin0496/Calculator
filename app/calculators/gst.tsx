@@ -2,9 +2,10 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useAutosaveCalculation } from '@/hooks/useAutosaveCalculation';
 import { useCalculatorStore } from '@/store/useCalculatorStore';
 import { calculateGST } from '@/lib/calculators/gst';
-import { formatINR } from '@/lib/formatters';
+import { formatINR, parseNumericInput } from '@/lib/formatters';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ResultCard } from '@/components/ui/ResultCard';
@@ -13,15 +14,28 @@ import { GST_SLABS, Spacing } from '@/constants/theme';
 export default function GSTScreen() {
   const { colors } = useTheme();
   const { gstAmount, gstRate, gstMode, setField } = useCalculatorStore();
+  const amount = parseNumericInput(gstAmount);
 
   const result = useMemo(
     () =>
       calculateGST({
-        amount: parseFloat(gstAmount) || 0,
+        amount,
         rate: gstRate,
         mode: gstMode,
       }),
-    [gstAmount, gstRate, gstMode]
+    [amount, gstMode, gstRate]
+  );
+
+  useAutosaveCalculation(
+    result.finalAmount > 0
+      ? {
+          calculatorId: 'gst',
+          title: 'GST Calculator',
+          inputSummary: `${gstMode === 'add' ? 'Add' : 'Remove'} ${gstRate}% on ${formatINR(amount, 2)}`,
+          resultSummary: `Total ${formatINR(result.finalAmount, 2)}`,
+          route: '/calculators/gst',
+        }
+      : null
   );
 
   return (
@@ -74,5 +88,5 @@ export default function GSTScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.xl, paddingBottom: Spacing['2xl'] },
+  content: { padding: Spacing.lg, paddingBottom: Spacing['2xl'] },
 });

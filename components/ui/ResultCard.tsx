@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { BorderRadius, FontSize, FontWeight, Shadows, Spacing } from '@/constants/theme';
+import { BorderRadius, FontFamily, FontSize, FontWeight, Shadows, Spacing } from '@/constants/theme';
 
 interface ResultItem {
   label: string;
@@ -21,37 +21,62 @@ export function ResultCard({ title, mainValue, mainLabel, items }: ResultCardPro
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }, Shadows.card]}>
-      <Text style={[styles.title, { color: colors.textSecondary }]}>{title}</Text>
-      <Text style={[styles.mainLabel, { color: colors.textMuted }]}>{mainLabel}</Text>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surfaceContainerHighest,
+          borderColor: colors.border,
+        },
+        Shadows.card,
+      ]}
+    >
+      <Text style={[styles.title, { color: colors.textSecondary, fontFamily: FontFamily.headline }]}>{title}</Text>
+
+      <Text style={[styles.mainLabel, { color: colors.textSecondary }]}>{mainLabel}</Text>
       <Text style={[styles.mainValue, { color: colors.primary }]}>{mainValue}</Text>
 
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-      {items.map((item, i) => (
-        <View key={i} style={styles.row}>
-          <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>
-            {item.label}
-          </Text>
-          <Text
+      <View
+        style={[
+          styles.itemsWrap,
+          {
+            backgroundColor: colors.surfaceContainerLow,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        {items.map((item, i) => (
+          <View
+            key={i}
             style={[
-              styles.rowValue,
-              { color: item.color || colors.textPrimary },
+              styles.row,
+              i < items.length - 1 ? { marginBottom: Spacing.sm } : null,
             ]}
           >
-            {item.value}
-          </Text>
-        </View>
-      ))}
+            <Text style={[styles.rowLabel, { color: colors.textSecondary, fontFamily: FontFamily.body }]}>
+              {item.label}
+            </Text>
+            <Text
+              style={[
+                styles.rowValue,
+                { color: item.color || colors.textPrimary, fontFamily: FontFamily.headline },
+              ]}
+            >
+              {item.value}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginVertical: Spacing.md,
+    borderWidth: 1,
   },
   title: {
     fontSize: FontSize.h2,
@@ -60,25 +85,27 @@ const styles = StyleSheet.create({
   },
   mainLabel: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.regular,
+    fontWeight: FontWeight.bold,
     marginBottom: Spacing.xs,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.6,
   },
   mainValue: {
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
+    letterSpacing: -0.5,
+    fontFamily: FontFamily.headline,
   },
-  divider: {
-    height: 1,
-    marginBottom: Spacing.md,
+  itemsWrap: {
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
   },
   rowLabel: {
     fontSize: FontSize.body,

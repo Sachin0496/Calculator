@@ -2,46 +2,89 @@
 
 export const Colors = {
   light: {
-    primary: '#4F6EF7',
-    primaryLight: '#7189FA',
-    primaryBg: '#E8ECFE',
-    success: '#22C55E',
-    successBg: '#DCFCE7',
-    warning: '#F59E0B',
-    warningBg: '#FEF3C7',
-    error: '#EF4444',
-    info: '#38BDF8',
-    background: '#F8F9FF',
-    card: '#FFFFFF',
-    inputBg: '#F1F3FF',
-    textPrimary: '#0F172A',
-    textSecondary: '#64748B',
-    textMuted: '#94A3B8',
-    border: '#E2E8F0',
-    tabBar: '#FFFFFF',
-    tabIcon: '#94A3B8',
-    tabIconActive: '#4F6EF7',
+    // Digital Ledger — "The Digital Ledger" editorial palette
+    primary: '#00535b', // Deep teal (authority)
+    primaryLight: '#006d77', // primary-container
+    primaryBg: '#006d77',
+
+    secondary: '#ae2f34', // Warm coral (action / emphasis)
+
+    // The system prefers teal tones for growth; reserve coral for emphasis/warnings
+    success: '#006d77', // primary-container (teal tint)
+    successBg: '#e5f4f4',
+
+    warning: '#ae2f34',
+    warningBg: '#ffdad6',
+
+    error: '#ba1a1a',
+    info: '#006972',
+
+    // Surfaces
+    background: '#f9f9f9', // surface
+    card: '#ffffff', // surface-container-lowest (default card)
+    inputBg: '#f3f3f4', // surface-container-low
+
+    surfaceContainerLowest: '#ffffff',
+    surfaceContainerLow: '#f3f3f4',
+    surfaceContainerHigh: '#e8e8e8',
+    surfaceContainerHighest: '#e2e2e2',
+    surfaceTint: '#006972',
+    surfaceVariant: '#e2e2e2',
+
+    // Typography colors
+    textPrimary: '#1a1c1c', // on-surface
+    textSecondary: '#3e494a', // on-surface-variant
+    textMuted: '#6f797a', // outline-ish
+
+    // Borders / strokes (ghost border fallback)
+    border: '#bec8ca', // outline-variant
+
+    // Bottom nav
+    tabBar: '#f9f9f9',
+    tabIcon: '#64748b',
+    tabIconActive: '#ae2f34',
+
+    // Extra tokens used by some components
+    outlineVariant: '#bec8ca',
   },
   dark: {
-    primary: '#7189FA',
-    primaryLight: '#96A8FC',
-    primaryBg: '#1E2138',
-    success: '#4ADE80',
+    primary: '#82d3de',
+    primaryLight: '#82d3de',
+    primaryBg: '#1b3941',
+
+    secondary: '#ff6b6b',
+
+    success: '#82d3de',
     successBg: '#14532D',
-    warning: '#FBBF24',
+
+    warning: '#ff6b6b',
     warningBg: '#78350F',
+
     error: '#F87171',
     info: '#7DD3FC',
+
     background: '#0D0F1A',
     card: '#161827',
     inputBg: '#1E2138',
+
+    surfaceContainerLowest: '#161827',
+    surfaceContainerLow: '#1E2138',
+    surfaceContainerHigh: '#232a44',
+    surfaceContainerHighest: '#2a3356',
+    surfaceTint: '#006972',
+    surfaceVariant: '#e2e2e2',
+
     textPrimary: '#F1F5F9',
-    textSecondary: '#94A3B8',
-    textMuted: '#64748B',
+    textSecondary: '#b6c0d1',
+    textMuted: '#94A3B8',
+
     border: '#2D3154',
+
     tabBar: '#161827',
-    tabIcon: '#64748B',
-    tabIconActive: '#7189FA',
+    tabIcon: '#a5b1c2',
+    tabIconActive: '#82d3de',
+
+    outlineVariant: '#2D3154',
   },
 };
 
@@ -55,18 +98,18 @@ export const Spacing = {
 };
 
 export const BorderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 20,
+  sm: 12, // "rounded-xl" feel
+  md: 20, // 20dp editorial cards
+  lg: 24, // 24dp large surfaces
   full: 9999,
 };
 
 export const FontSize = {
-  display: 32,
-  h1: 22,
+  display: 44, // display-lg for rupee results
+  h1: 28,
   h2: 18,
   body: 15,
-  bodyMedium: 15,
+  bodyMedium: 16,
   caption: 12,
 };
 
@@ -79,19 +122,25 @@ export const FontWeight = {
 
 export const Shadows = {
   card: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: '#1a1c1c',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+    elevation: 2,
   },
   button: {
-    shadowColor: '#4F6EF7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#ae2f34',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 2,
   },
+};
+
+export const FontFamily = {
+  headline: 'Manrope',
+  body: 'Inter',
+  label: 'Inter',
 };
 
 // Calculator metadata for home screen grid

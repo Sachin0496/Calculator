@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import Svg, { Path } from 'react-native-svg';
+import { BorderRadius, Spacing } from '@/constants/theme';
 
 // Simple icon components using SVG paths
 function HomeIcon({ color, size = 24 }: { color: string; size?: number }) {
@@ -41,15 +42,28 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.tabIcon,
         tabBarStyle: {
           backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
-          height: 85,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: BorderRadius.lg,
+          height: 78,
           paddingTop: 8,
-          paddingBottom: 28,
+          paddingBottom: 10,
+          shadowColor: '#1a1c1c',
+          shadowOpacity: 0.08,
+          shadowRadius: 24,
+          shadowOffset: { width: 0, height: -8 },
+          elevation: 6,
+          position: 'absolute',
+          left: Spacing.md,
+          right: Spacing.md,
+          bottom: Spacing.sm,
+          overflow: 'hidden',
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
         },
+        tabBarHideOnKeyboard: true,
         headerStyle: {
           backgroundColor: colors.background,
         },

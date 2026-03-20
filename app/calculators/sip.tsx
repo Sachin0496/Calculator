@@ -2,9 +2,10 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
+import { useAutosaveCalculation } from '@/hooks/useAutosaveCalculation';
 import { useCalculatorStore } from '@/store/useCalculatorStore';
 import { calculateSIP } from '@/lib/calculators/sip';
-import { formatINR, formatINRShort } from '@/lib/formatters';
+import { formatINR, formatINRShort, parseNumericInput } from '@/lib/formatters';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ResultCard } from '@/components/ui/ResultCard';
 import { DonutChart } from '@/components/charts/DonutChart';
@@ -13,15 +14,30 @@ import { Spacing } from '@/constants/theme';
 export default function SIPScreen() {
   const { colors } = useTheme();
   const { sipAmount, sipReturn, sipYears, setField } = useCalculatorStore();
+  const monthlyAmount = parseNumericInput(sipAmount);
+  const annualReturn = parseNumericInput(sipReturn);
+  const years = Math.max(0, Math.round(parseNumericInput(sipYears)));
 
   const result = useMemo(
     () =>
       calculateSIP({
-        monthlyAmount: parseFloat(sipAmount) || 0,
-        annualReturn: parseFloat(sipReturn) || 0,
-        years: parseInt(sipYears) || 0,
+        monthlyAmount,
+        annualReturn,
+        years,
       }),
-    [sipAmount, sipReturn, sipYears]
+    [annualReturn, monthlyAmount, years]
+  );
+
+  useAutosaveCalculation(
+    result.totalValue > 0
+      ? {
+          calculatorId: 'sip',
+          title: 'SIP Calculator',
+          inputSummary: `${formatINR(monthlyAmount)}/month for ${years} years at ${annualReturn}%`,
+          resultSummary: `Value ${formatINR(result.totalValue)}`,
+          route: '/calculators/sip',
+        }
+      : null
   );
 
   return (
@@ -82,5 +98,5 @@ export default function SIPScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: Spacing.xl, paddingBottom: Spacing['2xl'] },
+  content: { padding: Spacing.lg, paddingBottom: Spacing['2xl'] },
 });
